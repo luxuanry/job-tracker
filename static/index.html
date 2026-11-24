@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calm, efficient personal tool, like Teal's job tracker
+   IDEA: a hiring pipeline board, cards moving left to right
+   PICTURE: the board itself, columns of job cards under a slim stats strip
+   COLOUR and TYPE: deep teal dominant, mint support, coral accent; Manrope
+   LAYOUT: header + stats, toolbar, board (or list), slide-in drawer for details */
+:root{color-scheme:light dark;
+--bg:light-dark(#f3f8f7,#0b1716);--panel:light-dark(#ffffff,#112321);--ink:light-dark(#10302c,#e3f2ef);
+--mute:light-dark(#5d7773,#8fb0aa);--line:light-dark(#d9e7e4,#21403c);--teal:#0f766e;--teal2:light-dark(#d5f5ef,#16403a);
+--coral:#f2694b;--col:light-dark(#e8f1ef,#0f1f1d)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+.dot{flex:none}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Manrope,system-ui,sans-serif;overflow-x:clip}
+button,input,select,textarea{font:inherit;color:inherit}
+header{background:var(--teal);color:#fff;padding:22px max(4vw,16px) 18px}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+h1{margin:0;font-size:clamp(24px,3vw,32px);line-height:1.05;font-weight:800}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.stat{background:rgba(255,255,255,.12);border-radius:12px;padding:8px 14px;min-width:96px}
+.stat b{display:block;font-size:22px;line-height:1.1}.stat span{font-size:13px;opacity:.85}
+.btn{border:0;border-radius:10px;padding:10px 16px;min-height:44px;cursor:pointer;font-weight:700}
+.btn.primary{background:var(--coral);color:#fff}.btn.ghost{background:transparent;border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--coral);border:1px solid var(--coral)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.card:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px max(4vw,16px)}
+.bar input{flex:1 1 220px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:16px;min-height:44px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:0 14px;min-height:44px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--teal);color:#fff}
+.note{padding:0 max(4vw,16px);color:var(--mute);font-size:13px;min-height:18px}
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(250px,1fr);gap:12px;padding:8px max(4vw,16px) 40px;overflow-x:auto}
+.col{background:var(--col);border-radius:14px;padding:10px;min-height:300px;display:flex;flex-direction:column;gap:8px}
+.col.over{outline:2px dashed var(--teal)}
+.col h2{font-size:14px;margin:2px 4px 4px;display:flex;justify-content:space-between;align-items:center}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.cnt{color:var(--mute);font-weight:600}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.04);transition:transform .15s}
+.card:hover{transform:translateY(-2px)}
+.card .co{font-weight:800}.card .po{font-size:14px;margin:2px 0 8px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--mute)}
+.tag{background:var(--teal2);color:var(--ink);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.stars{color:var(--coral);letter-spacing:1px;font-size:13px}
+.empty{color:var(--mute);font-size:13px;text-align:center;padding:18px 6px}
+table{width:calc(100% - 2*max(4vw,16px));margin:8px max(4vw,16px) 40px;border-collapse:collapse;background:var(--panel);border-radius:12px;overflow:hidden}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
+th{background:var(--col);font-size:13px;color:var(--mute)}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--col)}
+.shade{position:fixed;inset:0;background:rgba(5,20,18,.45);display:none}
+.shade.on{display:block}
+aside{position:fixed;top:0;right:0;height:100%;width:min(480px,100%);background:var(--panel);transform:translateX(100%);transition:transform .2s;overflow-y:auto;padding:22px;box-shadow:-8px 0 30px rgba(0,0,0,.15);visibility:hidden}
+aside.on{transform:none;visibility:visible}
+aside h3{margin:0 0 14px;font-size:22px}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mute)}
+.f .w{grid-column:1/-1}
+.f input,.f select,.f textarea{border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:var(--bg);font-size:16px;min-height:44px}
+.f textarea{min-height:110px;resize:vertical}
+.rate{display:flex;gap:4px}.rate button{border:0;background:none;font-size:24px;cursor:pointer;color:var(--line);min-height:44px;min-width:36px}
+.rate button.on{color:var(--coral)}
+.acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;justify-content:space-between}
+.cv{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
+.cv a{color:var(--teal);font-weight:700}
+.confirm{display:none;background:var(--col);border-radius:10px;padding:12px;margin-top:12px;font-size:14px}
+.confirm.on{display:block}
+@media(max-width:600px){.f{grid-template-columns:1fr}.board{grid-auto-columns:minmax(240px,82vw)}
+table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 12px;padding-inline-start:8em}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;color:var(--mute)}.stack td:empty{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>Job Tracker</h1>
+    <button class="btn primary" id="addBtn">+ Add a job</button>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+<div class="bar">
+  <input id="q" type="search" placeholder="Search company, position, notes…" aria-label="Search">
+  <div class="seg" role="group" aria-label="View">
+    <button id="vBoard" aria-pressed="true">Board</button>
+    <button id="vList" aria-pressed="false">List</button>
+  </div>
+</div>
+<div class="note" id="note">Loading…</div>
+<main id="view"></main>
+
+<div class="shade" id="shade"></div>
+<aside id="drawer" aria-label="Job details">
+  <h3 id="dTitle">Add a job</h3>
+  <form id="form" class="f">
+    <label>Company *<input name="company" required maxlength="200"></label>
+    <label>Position *<input name="position" required maxlength="200"></label>
+    <label>Status<select name="status" id="statusSel"></select></label>
+    <label>Type<select name="job_type"><option>Alternance</option><option>Stage</option><option>CDI</option><option>CDD</option><option>Freelance</option></select></label>
+    <label>Applied on<input name="applied_date" type="date"></label>
+    <label>Location<input name="location" placeholder="Paris / Remote"></label>
+    <label>Contact email<input name="contact_email" type="email"></label>
+    <label>Salary<input name="salary" placeholder="1200 €/month"></label>
+    <label class="w">Job link<input name="job_url" type="url" placeholder="https://"></label>
+    <label class="w">Excitement<div class="rate" id="rate"></div></label>
+    <label class="w">Notes<textarea name="notes" placeholder="Interview questions, company highlights, next step…"></textarea></label>
+    <div class="w">
+      <div style="font-size:13px;color:var(--mute);margin-bottom:4px">CV used for this application</div>
+      <div class="cv" id="cvBox"></div>
+    </div>
+  </form>
+  <div class="acts">
+    <button class="btn danger" id="delBtn" type="button">Delete</button>
+    <div style="display:flex;gap:10px">
+      <button class="btn ghost" id="cancelBtn" type="button">Cancel</button>
+      <button class="btn primary" id="saveBtn" type="button">Save</button>
+    </div>
+  </div>
+  <div class="confirm" id="confirm">Delete this application? This cannot be undone.
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <button class="btn danger" id="yesDel" type="button">Yes, delete</button>
+      <button class="btn ghost" id="noDel" type="button">Keep it</button>
+    </div>
+  </div>
+</aside>
+
+<script>
+{
+// Board columns, in the same order as db.STATUSES on the server
+const STAGES = [
+  {k: 'saved', n: 'Saved', c: '#94a3b8'},
+  {k: 'sent', n: 'Applied', c: '#0f766e'},
+  {k: 'replied', n: 'Replied', c: '#8b5cf6'},
+  {k: 'interview', n: 'Interview', c: '#3b82f6'},
+  {k: 'offer', n: 'Offer', c: '#22c55e'},
+  {k: 'no_response', n: 'No response', c: '#a8a29e'},
+  {k: 'rejected', n: 'Rejected', c: '#f2694b'}
+];
+const FIELDS = ['company', 'position', 'status', 'job_type', 'applied_date', 'location', 'contact_email', 'salary', 'job_url', 'notes'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const stageOf = k => STAGES.find(s => s.k === k) || STAGES[1];
+
+let jobs = [], view = 'board', editing = null, rating = 3, cv = null, dragId = null;
+
+$('statusSel').innerHTML = STAGES.map(s => `<option value="${s.k}">${s.n}</option>`).join('');
+
+// Small fetch wrapper: throws with FastAPI's error message when the request fails
+async function api(path, options = {}) {
+  const res = await fetch(path, options);
+  if (!res.ok) {
+    let msg = res.statusText;
+    try { const body = await res.json(); msg = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail); } catch (e) {}
+    throw new Error(msg);
+  }
+  return res.status === 204 ? null : res.json();
+}
+const sendJSON = (method, body) => ({method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+
+async function load() {
+  try {
+    const [list, stats] = await Promise.all([api('/api/applications'), api('/api/stats')]);
+    jobs = list;
+    renderStats(stats);
+    $('note').textContent = jobs.length ? '' : 'No applications yet. Add your first job with the button above.';
+    render();
+  } catch (err) {
+    $('note').textContent = 'Cannot reach the server: ' + err.message;
+  }
+}
+
+function renderStats(s) {
+  const items = [['Total', s.total], ['Applied', s.sent], ['Interviews', s.by_status.interview], ['Offers', s.by_status.offer], ['Response rate', s.response_rate + '%']];
+  $('stats').innerHTML = items.map(([n, v]) => `<div class="stat"><b>${esc(v)}</b><span>${n}</span></div>`).join('');
+}
+
+function filtered() {
+  const q = $('q').value.trim().toLowerCase();
+  return q ? jobs.filter(j => [j.company, j.position, j.notes, j.location].join(' ').toLowerCase().includes(q)) : jobs;
+}
+
+function stars(n) { return n ? '★'.repeat(n) + '☆'.repeat(5 - n) : ''; }
+
+function cardHTML(j) {
+  return `<div class="card" draggable="true" tabindex="0" data-id="${esc(j.id)}">
+    <div class="co">${esc(j.company)}</div><div class="po">${esc(j.position)}</div>
+    <div class="meta">${j.job_type ? `<span class="tag">${esc(j.job_type)}</span>` : ''}
+    ${j.applied_date ? `<span>${esc(j.applied_date)}</span>` : ''}${j.cv_file_id ? '<span>CV attached</span>' : ''}
+    ${j.rating ? `<span class="stars">${stars(j.rating)}</span>` : ''}</div></div>`;
+}
+
+function render() {
+  const list = filtered();
+  if (view === 'board') {
+    $('view').innerHTML = `<div class="board">${STAGES.map(s => {
+      const items = list.filter(j => j.status === s.k);
+      return `<section class="col" data-stage="${s.k}"><h2><span><span class="dot" style="background:${s.c}"></span>${s.n}</span><span class="cnt">${items.length}</span></h2>
+      ${items.length ? items.map(cardHTML).join('') : '<div class="empty">Drop a card here</div>'}</section>`;
+    }).join('')}</div>`;
+  } else {
+    $('view').innerHTML = list.length ? `<table class="stack"><thead><tr><th>Company</th><th>Position</th><th>Status</th><th>Type</th><th>Applied on</th><th>Excitement</th></tr></thead><tbody>
+    ${list.map(j => `<tr data-id="${esc(j.id)}"><td><b>${esc(j.company)}</b></td><td>${esc(j.position)}</td>
+      <td><span class="dot" style="background:${stageOf(j.status).c}"></span>${stageOf(j.status).n}</td>
+      <td>${esc(j.job_type)}</td><td style="white-space:nowrap">${esc(j.applied_date)}</td><td class="stars">${j.rating ? '★'.repeat(j.rating) : ''}</td></tr>`).join('')}
+    </tbody></table>` : '';
+  }
+}
+
+// ---- Drawer (create / edit form)
+function openDrawer(job) {
+  editing = job || null;
+  const f = $('form'); f.reset();
+  $('dTitle').textContent = job ? 'Edit job' : 'Add a job';
+  $('delBtn').style.visibility = job ? 'visible' : 'hidden';
+  $('confirm').classList.remove('on');
+  const d = job || {status: 'saved', job_type: 'Alternance'};
+  for (const k of FIELDS) f.elements[k].value = d[k] || '';
+  rating = d.rating || 3;
+  cv = d.cv_file_id ? {id: d.cv_file_id, name: d.cv_file_name} : null;
+  drawRate(); drawCv();
+  $('shade').classList.add('on'); $('drawer').classList.add('on');
+  f.elements.company.focus();
+}
+function closeDrawer() { $('shade').classList.remove('on'); $('drawer').classList.remove('on'); }
+
+function drawRate() {
+  $('rate').innerHTML = [1, 2, 3, 4, 5].map(i => `<button type="button" data-r="${i}" class="${i <= rating ? 'on' : ''}" aria-label="${i} stars">★</button>`).join('');
+}
+function drawCv() {
+  const link = cv ? `<a href="/api/cvs/${encodeURIComponent(cv.id)}/file" target="_blank" rel="noopener">${esc(cv.name || 'CV')}</a> <button type="button" class="btn ghost" id="cvRm">Remove</button>` : '<span style="color:var(--mute)">None</span>';
+  $('cvBox').innerHTML = link + ' <label class="btn ghost" style="display:inline-flex;align-items:center">Upload PDF / Word<input type="file" id="cvIn" accept=".pdf,.doc,.docx" hidden></label>';
+}
+
+$('rate').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { rating = +b.dataset.r; drawRate(); } });
+$('cvBox').addEventListener('click', e => { if (e.target.id === 'cvRm') { cv = null; drawCv(); } });
+$('cvBox').addEventListener('change', async e => {
+  if (e.target.id !== 'cvIn' || !e.target.files[0]) return;
+  const body = new FormData(); body.append('file', e.target.files[0]);
+  $('cvBox').textContent = 'Uploading…';
+  try { const r = await api('/api/cvs', {method: 'POST', body}); cv = {id: r.id, name: r.original_name}; }
+  catch (err) { $('note').textContent = 'Upload failed: ' + err.message; }
+  drawCv();
+});
+
+$('saveBtn').addEventListener('click', async () => {
+  const f = $('form');
+  if (!f.reportValidity()) return;
+  const data = {};
+  for (const k of FIELDS) data[k] = f.elements[k].value.trim() || null;
+  data.rating = rating;
+  data.cv_file_id = cv ? cv.id : null;
+  try {
+    if (editing) await api(`/api/applications/${editing.id}`, sendJSON('PATCH', data));
+    else await api('/api/applications', sendJSON('POST', data));
+    closeDrawer(); load();
+  } catch (err) { $('note').textContent = 'Could not save: ' + err.message; }
+});
+$('delBtn').addEventListener('click', () => $('confirm').classList.add('on'));
+$('noDel').addEventListener('click', () => $('confirm').classList.remove('on'));
+$('yesDel').addEventListener('click', async () => {
+  try { await api(`/api/applications/${editing.id}`, {method: 'DELETE'}); closeDrawer(); load(); }
+  catch (err) { $('note').textContent = 'Could not delete: ' + err.message; }
+});
+$('cancelBtn').addEventListener('click', closeDrawer);
+$('shade').addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+$('addBtn').addEventListener('click', () => openDrawer(null));
+$('q').addEventListener('input', render);
+for (const [id, v] of [['vBoard', 'board'], ['vList', 'list']]) $(id).addEventListener('click', () => {
+  view = v; $('vBoard').setAttribute('aria-pressed', v === 'board'); $('vList').setAttribute('aria-pressed', v === 'list'); render();
+});
+
+// Open a card or a table row
+const findJob = id => jobs.find(j => String(j.id) === id);
+$('view').addEventListener('click', e => { const el = e.target.closest('[data-id]'); if (el) openDrawer(findJob(el.dataset.id)); });
+$('view').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset.id) openDrawer(findJob(e.target.dataset.id)); });
+
+// ---- Drag and drop: moving a card sends PATCH {status}
+$('view').addEventListener('dragstart', e => { const c = e.target.closest('.card'); if (c) { dragId = c.dataset.id; e.dataTransfer.effectAllowed = 'move'; } });
+$('view').addEventListener('dragover', e => { const c = e.target.closest('.col'); if (c && dragId) { e.preventDefault(); c.classList.add('over'); } });
+$('view').addEventListener('dragleave', e => { const c = e.target.closest('.col'); if (c) c.classList.remove('over'); });
+$('view').addEventListener('drop', async e => {
+  const c = e.target.closest('.col'); if (!c || !dragId) return;
+  e.preventDefault(); c.classList.remove('over');
+  const job = findJob(dragId), stage = c.dataset.stage; dragId = null;
+  if (!job || job.status === stage) return;
+  const patch = {status: stage};
+  // Moving out of "Saved" means it was just sent: fill today's date if empty
+  if (job.status === 'saved' && !job.applied_date) patch.applied_date = new Date().toISOString().slice(0, 10);
+  try { await api(`/api/applications/${job.id}`, sendJSON('PATCH', patch)); load(); }
+  catch (err) { $('note').textContent = 'Could not move: ' + err.message; }
+});
+
+load();
+}
+</script>
+</body>
+</html>
