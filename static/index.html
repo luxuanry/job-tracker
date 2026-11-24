@@ -36,6 +36,9 @@ h1{margin:0;font-size:clamp(24px,3vw,32px);line-height:1.05;font-weight:800}
 .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .seg button{border:0;background:var(--panel);padding:0 14px;min-height:44px;cursor:pointer}
 .seg button[aria-pressed=true]{background:var(--teal);color:#fff}
+.lang{border-color:rgba(255,255,255,.5)}.lang button{background:transparent;color:#fff;font-weight:700;min-width:48px}
+.lang button[aria-pressed=true]{background:#fff;color:var(--teal)}
+.req::after{content:' *'}
 .note{padding:0 max(4vw,16px);color:var(--mute);font-size:13px;min-height:18px}
 .board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(250px,1fr);gap:12px;padding:8px max(4vw,16px) 40px;overflow-x:auto}
 .col{background:var(--col);border-radius:14px;padding:10px;min-height:300px;display:flex;flex-direction:column;gap:8px}
@@ -80,67 +83,114 @@ table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-bl
 <header>
   <div class="top">
     <h1>Job Tracker</h1>
-    <button class="btn primary" id="addBtn">+ Add a job</button>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="seg lang" role="group" aria-label="Language">
+        <button data-lang="en" aria-pressed="true">EN</button>
+        <button data-lang="fr" aria-pressed="false">FR</button>
+      </div>
+      <button class="btn primary" id="addBtn" data-i18n="add"></button>
+    </div>
   </div>
   <div class="stats" id="stats"></div>
 </header>
 <div class="bar">
-  <input id="q" type="search" placeholder="Search company, position, notes…" aria-label="Search">
+  <input id="q" type="search" data-i18n-ph="search" aria-label="Search">
   <div class="seg" role="group" aria-label="View">
-    <button id="vBoard" aria-pressed="true">Board</button>
-    <button id="vList" aria-pressed="false">List</button>
+    <button id="vBoard" aria-pressed="true" data-i18n="board"></button>
+    <button id="vList" aria-pressed="false" data-i18n="list"></button>
   </div>
 </div>
-<div class="note" id="note">Loading…</div>
+<div class="note" id="note"></div>
 <main id="view"></main>
 
 <div class="shade" id="shade"></div>
 <aside id="drawer" aria-label="Job details">
   <h3 id="dTitle">Add a job</h3>
   <form id="form" class="f">
-    <label>Company *<input name="company" required maxlength="200"></label>
-    <label>Position *<input name="position" required maxlength="200"></label>
-    <label>Status<select name="status" id="statusSel"></select></label>
-    <label>Type<select name="job_type"><option>Alternance</option><option>Stage</option><option>CDI</option><option>CDD</option><option>Freelance</option></select></label>
-    <label>Applied on<input name="applied_date" type="date"></label>
-    <label>Location<input name="location" placeholder="Paris / Remote"></label>
-    <label>Contact email<input name="contact_email" type="email"></label>
-    <label>Salary<input name="salary" placeholder="1200 €/month"></label>
-    <label class="w">Job link<input name="job_url" type="url" placeholder="https://"></label>
-    <label class="w">Excitement<div class="rate" id="rate"></div></label>
-    <label class="w">Notes<textarea name="notes" placeholder="Interview questions, company highlights, next step…"></textarea></label>
+    <label><span data-i18n="company" class="req"></span><input name="company" required maxlength="200"></label>
+    <label><span data-i18n="position" class="req"></span><input name="position" required maxlength="200"></label>
+    <label><span data-i18n="status"></span><select name="status" id="statusSel"></select></label>
+    <label><span data-i18n="type"></span><select name="job_type"><option>Alternance</option><option>Stage</option><option>CDI</option><option>CDD</option><option>Freelance</option></select></label>
+    <label><span data-i18n="applied"></span><input name="applied_date" type="date"></label>
+    <label><span data-i18n="location"></span><input name="location" placeholder="Paris / Remote"></label>
+    <label><span data-i18n="contact"></span><input name="contact_email" type="email"></label>
+    <label><span data-i18n="salary"></span><input name="salary" data-i18n-ph="salaryPh"></label>
+    <label class="w"><span data-i18n="link"></span><input name="job_url" type="url" placeholder="https://"></label>
+    <label class="w"><span data-i18n="excitement"></span><div class="rate" id="rate"></div></label>
+    <label class="w"><span data-i18n="notes"></span><textarea name="notes" data-i18n-ph="notesPh"></textarea></label>
     <div class="w">
-      <div style="font-size:13px;color:var(--mute);margin-bottom:4px">CV used for this application</div>
+      <div style="font-size:13px;color:var(--mute);margin-bottom:4px" data-i18n="cvUsed"></div>
       <div class="cv" id="cvBox"></div>
     </div>
   </form>
   <div class="acts">
-    <button class="btn danger" id="delBtn" type="button">Delete</button>
+    <button class="btn danger" id="delBtn" type="button" data-i18n="delete"></button>
     <div style="display:flex;gap:10px">
-      <button class="btn ghost" id="cancelBtn" type="button">Cancel</button>
-      <button class="btn primary" id="saveBtn" type="button">Save</button>
+      <button class="btn ghost" id="cancelBtn" type="button" data-i18n="cancel"></button>
+      <button class="btn primary" id="saveBtn" type="button" data-i18n="save"></button>
     </div>
   </div>
-  <div class="confirm" id="confirm">Delete this application? This cannot be undone.
+  <div class="confirm" id="confirm"><span data-i18n="confirmDel"></span>
     <div style="display:flex;gap:10px;margin-top:10px">
-      <button class="btn danger" id="yesDel" type="button">Yes, delete</button>
-      <button class="btn ghost" id="noDel" type="button">Keep it</button>
+      <button class="btn danger" id="yesDel" type="button" data-i18n="yesDel"></button>
+      <button class="btn ghost" id="noDel" type="button" data-i18n="noDel"></button>
     </div>
   </div>
 </aside>
 
 <script>
 {
+// UI translations. Keys in data-i18n / data-i18n-ph attributes and in t() calls.
+const I18N = {
+  en: {
+    add: '+ Add a job', search: 'Search company, position, notes…', board: 'Board', list: 'List',
+    loading: 'Loading…', empty: 'No applications yet. Add your first job with the button above.',
+    company: 'Company', position: 'Position', status: 'Status', type: 'Type', applied: 'Applied on',
+    location: 'Location', contact: 'Contact email', salary: 'Salary', salaryPh: '1200 €/month', link: 'Job link',
+    excitement: 'Excitement', notes: 'Notes', notesPh: 'Interview questions, company highlights, next step…',
+    cvUsed: 'CV used for this application', none: 'None', upload: 'Upload PDF / Word', uploading: 'Uploading…',
+    remove: 'Remove', cvAttached: 'CV attached', delete: 'Delete', cancel: 'Cancel', save: 'Save',
+    confirmDel: 'Delete this application? This cannot be undone.', yesDel: 'Yes, delete', noDel: 'Keep it',
+    addTitle: 'Add a job', editTitle: 'Edit job', dropHere: 'Drop a card here',
+    total: 'Total', sentN: 'Applied', interviews: 'Interviews', offers: 'Offers', rate: 'Response rate',
+    errServer: 'Cannot reach the server: ', errSave: 'Could not save: ', errDelete: 'Could not delete: ',
+    errMove: 'Could not move: ', errUpload: 'Upload failed: ',
+    st: {saved: 'Saved', sent: 'Applied', replied: 'Replied', interview: 'Interview', offer: 'Offer', no_response: 'No response', rejected: 'Rejected'}
+  },
+  fr: {
+    add: '+ Ajouter une offre', search: 'Rechercher une entreprise, un poste, une note…', board: 'Tableau', list: 'Liste',
+    loading: 'Chargement…', empty: 'Aucune candidature pour le moment. Ajoutez votre première offre avec le bouton ci-dessus.',
+    company: 'Entreprise', position: 'Poste', status: 'Statut', type: 'Type', applied: 'Date de candidature',
+    location: 'Lieu', contact: 'E-mail du contact', salary: 'Rémunération', salaryPh: '1200 €/mois', link: "Lien de l'offre",
+    excitement: 'Intérêt', notes: 'Notes', notesPh: "Questions d'entretien, points forts de l'entreprise, prochaine étape…",
+    cvUsed: 'CV envoyé pour cette candidature', none: 'Aucun', upload: 'Importer PDF / Word', uploading: 'Import en cours…',
+    remove: 'Retirer', cvAttached: 'CV joint', delete: 'Supprimer', cancel: 'Annuler', save: 'Enregistrer',
+    confirmDel: 'Supprimer cette candidature ? Cette action est irréversible.', yesDel: 'Oui, supprimer', noDel: 'La garder',
+    addTitle: 'Ajouter une offre', editTitle: "Modifier l'offre", dropHere: 'Déposez une carte ici',
+    total: 'Total', sentN: 'Envoyées', interviews: 'Entretiens', offers: 'Offres', rate: 'Taux de réponse',
+    errServer: 'Serveur injoignable : ', errSave: "Impossible d'enregistrer : ", errDelete: 'Impossible de supprimer : ',
+    errMove: 'Impossible de déplacer : ', errUpload: "Échec de l'import : ",
+    st: {saved: 'À postuler', sent: 'Envoyée', replied: 'Réponse reçue', interview: 'Entretien', offer: 'Offre', no_response: 'Sans réponse', rejected: 'Refusée'}
+  }
+};
+
+// Remembered choice first, then the browser language, then English
+let lang = 'en';
+try { lang = localStorage.getItem('lang') || ''; } catch (e) { lang = ''; }
+if (!I18N[lang]) lang = (navigator.language || '').toLowerCase().startsWith('fr') ? 'fr' : 'en';
+const t = key => I18N[lang][key] ?? I18N.en[key] ?? key;
+
 // Board columns, in the same order as db.STATUSES on the server
 const STAGES = [
-  {k: 'saved', n: 'Saved', c: '#94a3b8'},
-  {k: 'sent', n: 'Applied', c: '#0f766e'},
-  {k: 'replied', n: 'Replied', c: '#8b5cf6'},
-  {k: 'interview', n: 'Interview', c: '#3b82f6'},
-  {k: 'offer', n: 'Offer', c: '#22c55e'},
-  {k: 'no_response', n: 'No response', c: '#a8a29e'},
-  {k: 'rejected', n: 'Rejected', c: '#f2694b'}
+  {k: 'saved', c: '#94a3b8'},
+  {k: 'sent', c: '#0f766e'},
+  {k: 'replied', c: '#8b5cf6'},
+  {k: 'interview', c: '#3b82f6'},
+  {k: 'offer', c: '#22c55e'},
+  {k: 'no_response', c: '#a8a29e'},
+  {k: 'rejected', c: '#f2694b'}
 ];
+const stName = k => I18N[lang].st[k] || k;
 const FIELDS = ['company', 'position', 'status', 'job_type', 'applied_date', 'location', 'contact_email', 'salary', 'job_url', 'notes'];
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -148,7 +198,26 @@ const stageOf = k => STAGES.find(s => s.k === k) || STAGES[1];
 
 let jobs = [], view = 'board', editing = null, rating = 3, cv = null, dragId = null;
 
-$('statusSel').innerHTML = STAGES.map(s => `<option value="${s.k}">${s.n}</option>`).join('');
+let lastStats = null;
+
+// Apply the current language to every static label, then redraw dynamic parts
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+  const current = $('statusSel').value;
+  $('statusSel').innerHTML = STAGES.map(s => `<option value="${s.k}">${esc(stName(s.k))}</option>`).join('');
+  if (current) $('statusSel').value = current;
+  if (lastStats) renderStats(lastStats);
+  render();
+}
+document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => {
+  lang = b.dataset.lang;
+  try { localStorage.setItem('lang', lang); } catch (e) {}
+  applyLang();
+  if ($('drawer').classList.contains('on')) { $('dTitle').textContent = t(editing ? 'editTitle' : 'addTitle'); drawCv(); }
+}));
 
 // Small fetch wrapper: throws with FastAPI's error message when the request fails
 async function api(path, options = {}) {
@@ -166,17 +235,17 @@ async function load() {
   try {
     const [list, stats] = await Promise.all([api('/api/applications'), api('/api/stats')]);
     jobs = list;
-    renderStats(stats);
-    $('note').textContent = jobs.length ? '' : 'No applications yet. Add your first job with the button above.';
+    lastStats = stats; renderStats(stats);
+    $('note').textContent = jobs.length ? '' : t('empty');
     render();
   } catch (err) {
-    $('note').textContent = 'Cannot reach the server: ' + err.message;
+    $('note').textContent = t('errServer') + err.message;
   }
 }
 
 function renderStats(s) {
-  const items = [['Total', s.total], ['Applied', s.sent], ['Interviews', s.by_status.interview], ['Offers', s.by_status.offer], ['Response rate', s.response_rate + '%']];
-  $('stats').innerHTML = items.map(([n, v]) => `<div class="stat"><b>${esc(v)}</b><span>${n}</span></div>`).join('');
+  const items = [['total', s.total], ['sentN', s.sent], ['interviews', s.by_status.interview], ['offers', s.by_status.offer], ['rate', s.response_rate + '%']];
+  $('stats').innerHTML = items.map(([k, v]) => `<div class="stat"><b>${esc(v)}</b><span>${esc(t(k))}</span></div>`).join('');
 }
 
 function filtered() {
@@ -190,7 +259,7 @@ function cardHTML(j) {
   return `<div class="card" draggable="true" tabindex="0" data-id="${esc(j.id)}">
     <div class="co">${esc(j.company)}</div><div class="po">${esc(j.position)}</div>
     <div class="meta">${j.job_type ? `<span class="tag">${esc(j.job_type)}</span>` : ''}
-    ${j.applied_date ? `<span>${esc(j.applied_date)}</span>` : ''}${j.cv_file_id ? '<span>CV attached</span>' : ''}
+    ${j.applied_date ? `<span>${esc(j.applied_date)}</span>` : ''}${j.cv_file_id ? `<span>${esc(t('cvAttached'))}</span>` : ''}
     ${j.rating ? `<span class="stars">${stars(j.rating)}</span>` : ''}</div></div>`;
 }
 
@@ -199,13 +268,13 @@ function render() {
   if (view === 'board') {
     $('view').innerHTML = `<div class="board">${STAGES.map(s => {
       const items = list.filter(j => j.status === s.k);
-      return `<section class="col" data-stage="${s.k}"><h2><span><span class="dot" style="background:${s.c}"></span>${s.n}</span><span class="cnt">${items.length}</span></h2>
-      ${items.length ? items.map(cardHTML).join('') : '<div class="empty">Drop a card here</div>'}</section>`;
+      return `<section class="col" data-stage="${s.k}"><h2><span><span class="dot" style="background:${s.c}"></span>${esc(stName(s.k))}</span><span class="cnt">${items.length}</span></h2>
+      ${items.length ? items.map(cardHTML).join('') : `<div class="empty">${esc(t('dropHere'))}</div>`}</section>`;
     }).join('')}</div>`;
   } else {
-    $('view').innerHTML = list.length ? `<table class="stack"><thead><tr><th>Company</th><th>Position</th><th>Status</th><th>Type</th><th>Applied on</th><th>Excitement</th></tr></thead><tbody>
+    $('view').innerHTML = list.length ? `<table class="stack"><thead><tr>${['company', 'position', 'status', 'type', 'applied', 'excitement'].map(k => `<th>${esc(t(k))}</th>`).join('')}</tr></thead><tbody>
     ${list.map(j => `<tr data-id="${esc(j.id)}"><td><b>${esc(j.company)}</b></td><td>${esc(j.position)}</td>
-      <td><span class="dot" style="background:${stageOf(j.status).c}"></span>${stageOf(j.status).n}</td>
+      <td><span class="dot" style="background:${stageOf(j.status).c}"></span>${esc(stName(j.status))}</td>
       <td>${esc(j.job_type)}</td><td style="white-space:nowrap">${esc(j.applied_date)}</td><td class="stars">${j.rating ? '★'.repeat(j.rating) : ''}</td></tr>`).join('')}
     </tbody></table>` : '';
   }
@@ -215,7 +284,7 @@ function render() {
 function openDrawer(job) {
   editing = job || null;
   const f = $('form'); f.reset();
-  $('dTitle').textContent = job ? 'Edit job' : 'Add a job';
+  $('dTitle').textContent = t(job ? 'editTitle' : 'addTitle');
   $('delBtn').style.visibility = job ? 'visible' : 'hidden';
   $('confirm').classList.remove('on');
   const d = job || {status: 'saved', job_type: 'Alternance'};
@@ -232,8 +301,8 @@ function drawRate() {
   $('rate').innerHTML = [1, 2, 3, 4, 5].map(i => `<button type="button" data-r="${i}" class="${i <= rating ? 'on' : ''}" aria-label="${i} stars">★</button>`).join('');
 }
 function drawCv() {
-  const link = cv ? `<a href="/api/cvs/${encodeURIComponent(cv.id)}/file" target="_blank" rel="noopener">${esc(cv.name || 'CV')}</a> <button type="button" class="btn ghost" id="cvRm">Remove</button>` : '<span style="color:var(--mute)">None</span>';
-  $('cvBox').innerHTML = link + ' <label class="btn ghost" style="display:inline-flex;align-items:center">Upload PDF / Word<input type="file" id="cvIn" accept=".pdf,.doc,.docx" hidden></label>';
+  const link = cv ? `<a href="/api/cvs/${encodeURIComponent(cv.id)}/file" target="_blank" rel="noopener">${esc(cv.name || 'CV')}</a> <button type="button" class="btn ghost" id="cvRm">${esc(t('remove'))}</button>` : `<span style="color:var(--mute)">${esc(t('none'))}</span>`;
+  $('cvBox').innerHTML = link + ' <label class="btn ghost" style="display:inline-flex;align-items:center">' + esc(t('upload')) + '<input type="file" id="cvIn" accept=".pdf,.doc,.docx" hidden></label>';
 }
 
 $('rate').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { rating = +b.dataset.r; drawRate(); } });
@@ -241,9 +310,9 @@ $('cvBox').addEventListener('click', e => { if (e.target.id === 'cvRm') { cv = n
 $('cvBox').addEventListener('change', async e => {
   if (e.target.id !== 'cvIn' || !e.target.files[0]) return;
   const body = new FormData(); body.append('file', e.target.files[0]);
-  $('cvBox').textContent = 'Uploading…';
+  $('cvBox').textContent = t('uploading');
   try { const r = await api('/api/cvs', {method: 'POST', body}); cv = {id: r.id, name: r.original_name}; }
-  catch (err) { $('note').textContent = 'Upload failed: ' + err.message; }
+  catch (err) { $('note').textContent = t('errUpload') + err.message; }
   drawCv();
 });
 
@@ -258,13 +327,13 @@ $('saveBtn').addEventListener('click', async () => {
     if (editing) await api(`/api/applications/${editing.id}`, sendJSON('PATCH', data));
     else await api('/api/applications', sendJSON('POST', data));
     closeDrawer(); load();
-  } catch (err) { $('note').textContent = 'Could not save: ' + err.message; }
+  } catch (err) { $('note').textContent = t('errSave') + err.message; }
 });
 $('delBtn').addEventListener('click', () => $('confirm').classList.add('on'));
 $('noDel').addEventListener('click', () => $('confirm').classList.remove('on'));
 $('yesDel').addEventListener('click', async () => {
   try { await api(`/api/applications/${editing.id}`, {method: 'DELETE'}); closeDrawer(); load(); }
-  catch (err) { $('note').textContent = 'Could not delete: ' + err.message; }
+  catch (err) { $('note').textContent = t('errDelete') + err.message; }
 });
 $('cancelBtn').addEventListener('click', closeDrawer);
 $('shade').addEventListener('click', closeDrawer);
@@ -293,9 +362,11 @@ $('view').addEventListener('drop', async e => {
   // Moving out of "Saved" means it was just sent: fill today's date if empty
   if (job.status === 'saved' && !job.applied_date) patch.applied_date = new Date().toISOString().slice(0, 10);
   try { await api(`/api/applications/${job.id}`, sendJSON('PATCH', patch)); load(); }
-  catch (err) { $('note').textContent = 'Could not move: ' + err.message; }
+  catch (err) { $('note').textContent = t('errMove') + err.message; }
 });
 
+applyLang();
+$('note').textContent = t('loading');
 load();
 }
 </script>
